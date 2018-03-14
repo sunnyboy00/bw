@@ -32,7 +32,7 @@ func doWork(id int, j job) {
 	//time.Sleep(j.duration)
 
 	// 提交请求
-	param := fmt.Sprintf("name=myss%d-%s&delay=1s", id, j.name)
+	param := fmt.Sprintf("name=myss%d-%s&delay=2s", id, j.name)
 	req, err := http.NewRequest("POST", url, strings.NewReader(param))
 	if err != nil {
 		fmt.Println(err)
