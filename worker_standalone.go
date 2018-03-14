@@ -1,53 +1,51 @@
 package main
 
 import (
-	_ "expvar"
 	"fmt"
 	"math/rand"
 	"sync"
 	"time"
 )
 
+const maxWorkers = 10
+
 type job struct {
 	name     string
 	duration time.Duration
 }
 
-type worker struct {
-	id int
-}
-
-func (w worker) process(j job) {
-	fmt.Printf("worker%d: started %s, working for %fs\n", w.id, j.name, j.duration.Seconds())
+func doWork(id int, j job) {
+	fmt.Printf("worker%d: started %s, working for %fs\n", id, j.name, j.duration.Seconds())
 	time.Sleep(j.duration)
-	fmt.Printf("worker%d: completed %s!\n", w.id, j.name)
+	fmt.Printf("worker%d: completed %s!\n", id, j.name)
 }
 
 func main() {
-	wg := &sync.WaitGroup{}
-	jobCh := make(chan job)
+	// channel for jobs
+	jobs := make(chan job, 20)
 
 	// start workers
-	for i := 0; i < 10; i++ {
-		wg.Add(1)
-		w := worker{i}
-		go func(w worker) {
-			for j := range jobCh {
-				w.process(j)
+	wg := &sync.WaitGroup{}
+	wg.Add(maxWorkers)
+	for i := 1; i <= maxWorkers; i++ {
+		go func(i int) {
+			defer wg.Done()
+
+			for j := range jobs {
+				doWork(i, j)
 			}
-			wg.Done()
-		}(w)
+		}(i)
 	}
 
-	// add jobs to queue
-	for i := 0; i < 100; i++ {
+	// add jobs
+	for i := 0; i < 1000000; i++ {
 		name := fmt.Sprintf("job-%d", i)
-		duration := time.Duration(rand.Intn(1000)) * time.Millisecond
+		duration := time.Duration(rand.Intn(10)) * time.Millisecond
 		fmt.Printf("adding: %s %s\n", name, duration)
-		jobCh <- job{name, duration}
+		jobs <- job{name, duration}
 	}
+	close(jobs)
 
-	// close jobCh and wait for workers to complete
-	close(jobCh)
+	// wait for workers to complete
 	wg.Wait()
 }

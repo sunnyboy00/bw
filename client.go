@@ -39,7 +39,7 @@ func main() {
 	}
 
 	body := bytes.NewBuffer([]byte(b))
-	res, err := http.Post("http://127.0.0.1:8888/", "application/json;charset=utf-8", body)
+	res, err := http.Post("http://127.0.0.1:8080/work", "application/json;charset=utf-8", body)
 	if err != nil {
 		log.Fatal(err)
 		return

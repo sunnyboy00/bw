@@ -1,13 +1,11 @@
+// Original code with Dispatcher
 package main
 
 import (
-	_ "expvar"
 	"flag"
-	//"io"
 	"fmt"
 	"log"
 	"net/http"
-	_ "net/http/pprof"
 	"time"
 )
 
@@ -135,13 +133,12 @@ func requestHandler(w http.ResponseWriter, r *http.Request, jobQueue chan Job) {
 
 	// Render success.
 	w.WriteHeader(http.StatusCreated)
-	//io.WriteString(w, "ok\n")
 }
 
 func main() {
 	var (
-		maxWorkers   = flag.Int("max_workers", 100000, "The number of workers to start")
-		maxQueueSize = flag.Int("max_queue_size", 200000, "The size of job queue")
+		maxWorkers   = flag.Int("max_workers", 5, "The number of workers to start")
+		maxQueueSize = flag.Int("max_queue_size", 100, "The size of job queue")
 		port         = flag.String("port", "8080", "The server port")
 	)
 	flag.Parse()

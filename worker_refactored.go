@@ -1,12 +1,10 @@
 package main
 
 import (
-	_ "expvar"
 	"flag"
 	"fmt"
 	"log"
 	"net/http"
-	_ "net/http/pprof"
 	"time"
 )
 
@@ -15,17 +13,13 @@ type job struct {
 	duration time.Duration
 }
 
-type worker struct {
-	id int
-}
-
-func (w worker) process(j job) {
-	fmt.Printf("worker%d: started %s, working for %f seconds\n", w.id, j.name, j.duration.Seconds())
+func doWork(id int, j job) {
+	fmt.Printf("worker%d: started %s, working for %f seconds\n", id, j.name, j.duration.Seconds())
 	time.Sleep(j.duration)
-	fmt.Printf("worker%d: completed %s!\n", w.id, j.name)
+	fmt.Printf("worker%d: completed %s!\n", id, j.name)
 }
 
-func requestHandler(jobCh chan job, w http.ResponseWriter, r *http.Request) {
+func requestHandler(jobs chan job, w http.ResponseWriter, r *http.Request) {
 	// Make sure we can only be called with an HTTP POST request.
 	if r.Method != "POST" {
 		w.Header().Set("Allow", "POST")
@@ -57,7 +51,7 @@ func requestHandler(jobCh chan job, w http.ResponseWriter, r *http.Request) {
 	job := job{name, duration}
 	go func() {
 		fmt.Printf("added: %s %s\n", job.name, job.duration)
-		jobCh <- job
+		jobs <- job
 	}()
 
 	// Render success.
@@ -74,21 +68,20 @@ func main() {
 	flag.Parse()
 
 	// create job channel
-	jobCh := make(chan job, *maxQueueSize)
+	jobs := make(chan job, *maxQueueSize)
 
 	// create workers
-	for i := 0; i < *maxWorkers; i++ {
-		w := worker{i}
-		go func(w worker) {
-			for j := range jobCh {
-				w.process(j)
+	for i := 1; i <= *maxWorkers; i++ {
+		go func(i int) {
+			for j := range jobs {
+				doWork(i, j)
 			}
-		}(w)
+		}(i)
 	}
 
 	// handler for adding jobs
 	http.HandleFunc("/work", func(w http.ResponseWriter, r *http.Request) {
-		requestHandler(jobCh, w, r)
+		requestHandler(jobs, w, r)
 	})
 	log.Fatal(http.ListenAndServe(":"+*port, nil))
 }
