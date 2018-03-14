@@ -42,7 +42,7 @@ func (w Worker) start() {
 			case job := <-w.jobQueue:
 				// Dispatcher has added a job to my jobQueue.
 				fmt.Printf("worker%d: started %s, blocking for %f seconds\n", w.id, job.Name, job.Delay.Seconds())
-				time.Sleep(job.Delay)
+				//time.Sleep(job.Delay)
 				fmt.Printf("worker%d: completed %s!\n", w.id, job.Name)
 			case <-w.quitChan:
 				// We have been asked to stop.
@@ -139,7 +139,7 @@ func main() {
 	var (
 		maxWorkers   = flag.Int("max_workers", 5, "The number of workers to start")
 		maxQueueSize = flag.Int("max_queue_size", 100, "The size of job queue")
-		port         = flag.String("port", "8080", "The server port")
+		port         = flag.String("port", ":8080", "The server port")
 	)
 	flag.Parse()
 
@@ -154,5 +154,5 @@ func main() {
 	http.HandleFunc("/work", func(w http.ResponseWriter, r *http.Request) {
 		requestHandler(w, r, jobQueue)
 	})
-	log.Fatal(http.ListenAndServe(":"+*port, nil))
+	log.Fatal(http.ListenAndServe(*port, nil))
 }
