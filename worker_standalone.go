@@ -19,7 +19,7 @@ var (
 
 const (
 	maxWorkers = 10
-	maxJobNums = 100
+	maxJobNums = 100000
 )
 
 type job struct {
