@@ -7,7 +7,10 @@ import (
 	"time"
 )
 
-const maxWorkers = 10
+const (
+	maxWorkers = 10
+	maxJobNums = 100
+)
 
 type job struct {
 	name     string
@@ -15,9 +18,9 @@ type job struct {
 }
 
 func doWork(id int, j job) {
-	fmt.Printf("worker%d: started %s, working for %fs\n", id, j.name, j.duration.Seconds())
+	fmt.Printf("协程%d: 开始 %s, 休眠 %fs\n", id, j.name, j.duration.Seconds())
 	time.Sleep(j.duration)
-	fmt.Printf("worker%d: completed %s!\n", id, j.name)
+	fmt.Printf("协程%d: 完成 %s!\n", id, j.name)
 }
 
 func main() {
@@ -38,10 +41,10 @@ func main() {
 	}
 
 	// add jobs
-	for i := 0; i < 1000000; i++ {
-		name := fmt.Sprintf("job-%d", i)
+	for i := 0; i < maxJobNums; i++ {
+		name := fmt.Sprintf("任务%d", i)
 		duration := time.Duration(rand.Intn(10)) * time.Millisecond
-		fmt.Printf("adding: %s %s\n", name, duration)
+		fmt.Printf("添加任务: %s %s\n", name, duration)
 		jobs <- job{name, duration}
 	}
 	close(jobs)
