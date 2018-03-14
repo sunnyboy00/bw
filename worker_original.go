@@ -90,9 +90,9 @@ func (d *Dispatcher) dispatch() {
 		select {
 		case job := <-d.jobQueue:
 			go func() {
-				fmt.Printf("fetching workerJobQueue for: %s\n", job.Name)
+				//fmt.Printf("fetching workerJobQueue for: %s\n", job.Name)
 				workerJobQueue := <-d.workerPool
-				fmt.Printf("adding %s to workerJobQueue\n", job.Name)
+				//fmt.Printf("adding %s to workerJobQueue\n", job.Name)
 				workerJobQueue <- job
 			}()
 		}
@@ -102,28 +102,30 @@ func (d *Dispatcher) dispatch() {
 func requestHandler(w http.ResponseWriter, r *http.Request, jobQueue chan Job) {
 	// Make sure we can only be called with an HTTP POST request.
 	if r.Method != "POST" {
-		w.Header().Set("Allow", "POST")
-		w.WriteHeader(http.StatusMethodNotAllowed)
+		//w.Header().Set("Allow", "POST")
+		//w.WriteHeader(http.StatusMethodNotAllowed)
+		http.Error(w, "仅接受POST请求", http.StatusMethodNotAllowed)
 		return
 	}
 
 	// Parse the delay.
 	delay, err := time.ParseDuration(r.FormValue("delay"))
 	if err != nil {
-		http.Error(w, "Bad delay value: "+err.Error(), http.StatusBadRequest)
+		//http.Error(w, "参数：delay: "+err.Error(), http.StatusBadRequest)
+		http.Error(w, "无效参数：delay", http.StatusBadRequest)
 		return
 	}
 
 	// Validate delay is in range 1 to 10 seconds.
 	if delay.Seconds() < 1 || delay.Seconds() > 10 {
-		http.Error(w, "The delay must be between 1 and 10 seconds, inclusively.", http.StatusBadRequest)
+		http.Error(w, "参数：delay 需在 1 ~~ 10 之间。", http.StatusBadRequest)
 		return
 	}
 
 	// Set name and validate value.
 	name := r.FormValue("name")
 	if name == "" {
-		http.Error(w, "You must specify a name.", http.StatusBadRequest)
+		http.Error(w, "缺少参数：name", http.StatusBadRequest)
 		return
 	}
 

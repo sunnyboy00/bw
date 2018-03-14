@@ -31,7 +31,7 @@ func doWork(id int, j job) {
 	fmt.Printf("协程%d: 开始 %s, 休眠 %fs\n", id, j.name, j.duration.Seconds())
 	//time.Sleep(j.duration)
 
-	//提交请求
+	// 提交请求
 	param := fmt.Sprintf("name=myss%d-%s&delay=1s", id, j.name)
 	req, err := http.NewRequest("POST", url, strings.NewReader(param))
 	if err != nil {
@@ -41,11 +41,15 @@ func doWork(id int, j job) {
 
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
-	//处理返回结果
-	resp, _ := client.Do(req)
+	// 处理返回结果
+	resp, err := client.Do(req)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 	defer resp.Body.Close()
 
-	//返回的状态码
+	// 返回的状态码
 	status := resp.StatusCode
 	fmt.Println(status)
 
