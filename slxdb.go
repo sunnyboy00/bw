@@ -1,3 +1,13 @@
+/*
+CREATE TABLE aa (
+  `id` int(11) NOT NULL AUTO_INCREMENT PRIMARY KEY COMMENT '用户id',
+  `openid` varchar(50) NOT NULL DEFAULT '' COMMENT '微信openid',
+  `username` varchar(100) NOT NULL DEFAULT '' COMMENT '用户名',
+  `nickname` varchar(100) NOT NULL DEFAULT '' COMMENT '昵称',
+  `truename` varchar(100) NOT NULL DEFAULT '' COMMENT '真实姓名',
+  `mobile` varchar(20) NOT NULL DEFAULT '' COMMENT '手机号'
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+*/
 package main
 
 import (
@@ -13,22 +23,39 @@ import (
 
 var (
 	db *sql.DB
+	tb string
 )
 
 type Job struct {
 	Id       int64  `json:"id"`
 	Openid   string `json:"openid"`
+	Username string `json:"username"`
 	Nickname string `json:"nickname"`
+	Truename string `json:"truename"`
+	Mobile   string `json:"mobile"`
+}
+
+func init() {
+	db, _ = sql.Open("mysql", "zzdcuser:40702f506be@tcp(localhost:3306)/dbzzdc?charset=utf8")
+	db.SetMaxOpenConns(20)
+	db.SetMaxIdleConns(10)
+	db.Ping()
+
+	tb = "aa"
 }
 
 func doWork(id int, j Job) {
-	//fmt.Printf("worker%d: started %s, working for %f seconds\n", id, j.name, j.duration.Seconds())
-	//time.Sleep(j.duration)
-	//fmt.Printf("worker%d: completed %s!\n", id, j.name)
-	//fmt.Printf("ok => %#v\n", j)
-	st, _ := db.Prepare("INSERT INTO aa(id,openid,nickname) VALUES(?,?,?)")
-	defer st.Close()
-	st.Exec(j.Id, strings.TrimSpace(j.Openid), strings.TrimSpace(j.Nickname))
+	uid := 0
+	e := db.QueryRow("SELECT id FROM "+tb+" WHERE id=? LIMIT 1", j.Id).Scan(&uid)
+	if e != nil {
+		st, _ := db.Prepare("INSERT INTO " + tb + "(id,openid,username,nickname,truename,mobile) VALUES(?,?,?,?,?,?)")
+		defer st.Close()
+		st.Exec(j.Id, strings.TrimSpace(j.Openid), strings.TrimSpace(j.Username), strings.TrimSpace(j.Nickname), strings.TrimSpace(j.Truename), strings.TrimSpace(j.Mobile))
+	} else {
+		st, _ := db.Prepare("UPDATE " + tb + " SET openid=?,username=?,nickname=?,truename=?,mobile=? WHERE id=?")
+		defer st.Close()
+		st.Exec(strings.TrimSpace(j.Openid), strings.TrimSpace(j.Username), strings.TrimSpace(j.Nickname), strings.TrimSpace(j.Truename), strings.TrimSpace(j.Mobile), uid)
+	}
 }
 
 func requestHandler(jobs chan Job, w http.ResponseWriter, r *http.Request) {
@@ -61,18 +88,11 @@ func requestHandler(jobs chan Job, w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-func init() {
-	db, _ = sql.Open("mysql", "zzdcuser:40702f506be@tcp(localhost:3306)/dbzzdc?charset=utf8")
-	db.SetMaxOpenConns(20)
-	db.SetMaxIdleConns(10)
-	db.Ping()
-}
-
 func main() {
 	var (
 		maxQueueSize = flag.Int("max_queue_size", 100, "The size of job queue")
 		maxWorkers   = flag.Int("max_workers", 5, "The number of workers to start")
-		port         = flag.String("port", ":8080", "The server port")
+		port         = flag.String("port", ":8888", "The server port")
 	)
 	flag.Parse()
 

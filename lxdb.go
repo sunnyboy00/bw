@@ -28,13 +28,16 @@ var (
 	//生成client 参数为默认
 	client = &http.Client{}
 	//生成要访问的url
-	url = "http://127.0.0.1:8080/work"
+	url = "http://127.0.0.1:8888/work"
 )
 
 type Job struct {
 	Id       int64
 	Openid   string
+	Username string
 	Nickname string
+	Truename string
+	Mobile   string
 }
 
 func init() {
@@ -42,16 +45,12 @@ func init() {
 	db.SetMaxOpenConns(20)
 	db.SetMaxIdleConns(10)
 	db.Ping()
-
-	/*st, _ := db.Prepare("UPDATE tb_member SET fcword='' WHERE fcword!=''")
-	defer st.Close()
-	st.Exec()*/
 }
 
 func GetInfoList(minID int64) []Job {
 	jobList := make([]Job, 0)
 
-	sql := "SELECT id,openid,nickname FROM tb_member WHERE id>? ORDER BY id ASC LIMIT 100"
+	sql := "SELECT id,openid,username,nickname,truename,mobile FROM tb_member WHERE id>? ORDER BY id ASC LIMIT 100"
 	stmt, e := db.Prepare(sql)
 	if e != nil {
 		fmt.Println(e.Error())
@@ -69,7 +68,7 @@ func GetInfoList(minID int64) []Job {
 	lastId := minID
 	for rows.Next() {
 		var gs Job
-		rows.Scan(&gs.Id, &gs.Openid, &gs.Nickname)
+		rows.Scan(&gs.Id, &gs.Openid, &gs.Username, &gs.Nickname, &gs.Truename, &gs.Mobile)
 		jobList = append(jobList, gs)
 		lastId = gs.Id
 	}
@@ -100,22 +99,7 @@ func timeCost(start time.Time) {
 	fmt.Println("运行时长:", terminal)
 }
 
-func addFenciLogs(dpid, openid int64, words []string) {
-	param := strings.Join(words, ",")
-	fmt.Printf("%d => %s\n", dpid, param)
-	st, _ := db.Prepare("UPDATE tb_member SET fcword=? WHERE id=?")
-	defer st.Close()
-	st.Exec(param, dpid)
-
-	/*st, _ = db.Prepare("UPDATE tb_member SET nicknameent=REPLACE(nicknameent,?,'***') WHERE id=?")
-	for _, v := range words {
-		fmt.Printf("%d => %s\n", dpid, v)
-		st.Exec(v, dpid)
-	}*/
-}
-
 func doWork(i int, job Job) {
-	//fmt.Printf("%#v\n", job)
 	fmt.Printf("%d\t%s\t%s\t%d\n", job.Id, strings.TrimSpace(job.Openid), strings.TrimSpace(strings.Replace(job.Nickname, "\n", "", -1)), i)
 
 	b, err := json.Marshal(job)
