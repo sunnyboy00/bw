@@ -25,10 +25,10 @@ var (
 	db         *sql.DB
 	MinIDQueue chan int64 = make(chan int64)
 	quit       chan bool  = make(chan bool)
-	//生成client 参数为默认
+	// 生成client 参数为默认
 	client = &http.Client{}
-	//生成要访问的url
-	url = "http://127.0.0.1:8888/work"
+	// 生成要访问的url
+	url = "http://47.94.240.213:8888/work"
 )
 
 type Job struct {
@@ -41,7 +41,8 @@ type Job struct {
 }
 
 func init() {
-	db, _ = sql.Open("mysql", "zzdcuser:40702f506be@tcp(localhost:3306)/dbzzdc?charset=utf8")
+	//db, _ = sql.Open("mysql", "zzdcuser:40702f506be@tcp(localhost:3306)/dbzzdc?charset=utf8")
+	db, _ = sql.Open("mysql", "mizhailll:1Q!2W@3E#4R$5T%@tcp(rm-2zezhf22g54opio30.mysql.rds.aliyuncs.com:3306)/mizhai2?charset=utf8")
 	db.SetMaxOpenConns(20)
 	db.SetMaxIdleConns(10)
 	db.Ping()
@@ -181,7 +182,7 @@ func main() {
 	}()
 
 	go func() {
-		MinIDQueue <- 0
+		MinIDQueue <- 681790
 	}()
 
 	// wait for workers to complete
